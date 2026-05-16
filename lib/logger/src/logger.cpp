@@ -17,6 +17,7 @@ void connectionInitialization(void* params) {
     WiFi.disconnect();
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
+    WiFi.begin("Ayayu", "feelmysoul");
     for (;;) {
         if (WiFi.status() == WL_CONNECTED) {
             connectedToWifi = true;
@@ -36,6 +37,9 @@ void connectionInitialization(void* params) {
 }
 
 void initLogger(const char* processName) {
+    Serial.begin(115200);
+    delay(500);
+
     (void)xTaskCreatePinnedToCore(
         connectionInitialization,
         "WiFiConnect",
@@ -48,10 +52,13 @@ void initLogger(const char* processName) {
 }
 
 void printlog(uint16_t severity, const char* msg, ...) {
-    if (!syslogInitialized) return;
-
     va_list args;
     va_start(args, msg);
-    (void)syslog.vlogf_P((LOG_LOCAL2 | severity), msg, args);
+
+    if (syslogInitialized) {
+        (void)syslog.vlogf_P((LOG_LOCAL2 | severity), msg, args);
+    }
+
+    LOG_SERIAL(msg, args);
     va_end(args);
 }
