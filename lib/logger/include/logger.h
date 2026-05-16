@@ -10,10 +10,10 @@
 #define SEV_INFO  6
 #define SEV_DEBUG 7
 
-#define LOGD(msg, ...) printlog(SEV_DEBUG, PSTR(msg), ##__VA_ARGS__)
-#define LOGI(msg, ...) printlog(SEV_INFO, PSTR(msg), ##__VA_ARGS__)
-#define LOGW(msg, ...) printlog(SEV_WARNING, PSTR(msg), ##__VA_ARGS__)
-#define LOGE(msg, ...) printlog(SEV_ERR, PSTR(msg), ##__VA_ARGS__)
+#define LOGD(msg, ...) printlog(SEV_DEBUG, PSTR("[%s:%d]" msg), __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define LOGI(msg, ...) printlog(SEV_INFO, PSTR("[%s:%d]" msg), __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define LOGW(msg, ...) printlog(SEV_WARNING, PSTR("[%s:%d]" msg), __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define LOGE(msg, ...) printlog(SEV_ERR, PSTR("[%s:%d]" msg), __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 void initLogger(const char* processName);
 void printlog(uint16_t severity, const char* msg, ...);
