@@ -1,7 +1,8 @@
 import asyncio
 from bleak import BleakClient
 
-ADDRESS = "68:67:25:EC:83:4A"  # <-- replace with your ESP32 BLE MAC
+ADDRESS = "68:67:25:ED:E0:26"  # <-- replace with your ESP32 BLE MAC
+# ADDRESS = "68:67:25:EC:83:4A"  # <-- replace with your ESP32 BLE MAC
 CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
 async def main():
