@@ -9,7 +9,7 @@ static void ble_input_callback(int value);
 
 void setup()
 {
-  initLogger(DEVICE_NAME);
+  logger_init(DEVICE_NAME);
 
   ble_comm_init(DEVICE_NAME, ble_input_callback);
 }

@@ -15,7 +15,7 @@
 #define LOGW(msg, ...) printlog(SEV_WARNING, PSTR("[%s:%d] " msg), __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #define LOGE(msg, ...) printlog(SEV_ERR, PSTR("[%s:%d] " msg), __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
-void initLogger(const char *processName);
+void logger_init(const char *processName);
 void printlog(uint16_t severity, const char *msg, ...);
 
 #endif /* __LOGGER_H__ */

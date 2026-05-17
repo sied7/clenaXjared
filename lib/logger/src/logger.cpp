@@ -23,7 +23,7 @@ static void connectSyslogServer(void);
 static void wifiEventHandler(WiFiEvent_t event, WiFiEventInfo_t info);
 static void connectionMonitoringThread(void *params);
 
-void initLogger(const char *processName)
+void logger_init(const char *processName)
 {
 #ifdef USE_SERIAL_LOGGING
     Serial.begin(115200);
