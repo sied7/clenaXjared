@@ -5,13 +5,21 @@
 
 #define DEVICE_NAME "CLENA-JARED"
 
-void setup() {
+static void ble_input_callback(int value);
+
+void setup()
+{
   initLogger(DEVICE_NAME);
 
-  ble_comm_init(DEVICE_NAME, [](int value) {
-    LOGI("Received value from BLE client: %d", value);
-  });
+  ble_comm_init(DEVICE_NAME, ble_input_callback);
 }
 
-void loop() {
+void loop()
+{
+}
+
+/*------ STATIC FUNCTIONS ------*/
+static void ble_input_callback(int value)
+{
+    LOGI("Received value from BLE client: %d", value);
 }

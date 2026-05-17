@@ -21,9 +21,10 @@ static unsigned long lastSyslogCheck = 0;
 
 static void connectSyslogServer(void);
 static void wifiEventHandler(WiFiEvent_t event, WiFiEventInfo_t info);
-static void connectionMonitoringThread(void* params);
+static void connectionMonitoringThread(void *params);
 
-void initLogger(const char* processName) {
+void initLogger(const char *processName)
+{
 #ifdef USE_SERIAL_LOGGING
     Serial.begin(115200);
     delay(500);
@@ -34,16 +35,18 @@ void initLogger(const char* processName) {
     syslog.defaultPriority(LOG_USER | LOG_INFO);
 
     (void)xTaskCreatePinnedToCore(connectionMonitoringThread, "WiFiConnect",
-        4096, (void*)processName, 1, NULL, 0);
+                                  4096, (void *)processName, 1, NULL, 0);
 
     return;
 }
 
-void printlog(uint16_t severity, const char* msg, ...) {
+void printlog(uint16_t severity, const char *msg, ...)
+{
     va_list args;
     va_start(args, msg);
 
-    if (syslogServerConnected) {
+    if (syslogServerConnected)
+    {
         (void)syslog.vlogf_P((LOG_LOCAL2 | severity), msg, args);
     }
 
@@ -53,8 +56,9 @@ void printlog(uint16_t severity, const char* msg, ...) {
     va_end(args);
 }
 
-/// INTERNAL FUNCTIONS
-static void connectionMonitoringThread(void* params) {
+/*------ STATIC FUNCTIONS ------*/
+static void connectionMonitoringThread(void *params)
+{
     bool syslogReachable = false;
 
     WiFi.onEvent(wifiEventHandler);
@@ -62,29 +66,33 @@ static void connectionMonitoringThread(void* params) {
     WiFi.disconnect();
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
-    WiFi.begin(SSID, PASSWORD);
+    WiFi.begin(SSID, WIFI_PASSWORD);
 
     monitoring_on = true;
     while (monitoring_on)
     {
         // Wait until WiFi is connected
-        while (!connectedToWifi || reconnectingToWifi) {
+        while (!connectedToWifi || reconnectingToWifi)
+        {
             LOGD("Connecting to WiFi...");
             vTaskDelay(500 / portTICK_PERIOD_MS);
         }
 
-        // Check syslog server every 5 seconds ---
-        if (millis() - lastSyslogCheck > 5000) {
+        // Check syslog server every 5 seconds
+        if (millis() - lastSyslogCheck > 5000)
+        {
             lastSyslogCheck = millis();
 
             syslogReachable = Ping.ping("192.168.68.106", 1);
 
-            if (!syslogReachable && syslogServerConnected) {
+            if (!syslogReachable && syslogServerConnected)
+            {
                 LOGD("Syslog server lost, will retry...");
                 syslogServerConnected = false;
             }
 
-            if (syslogReachable && !syslogServerConnected) {
+            if (syslogReachable && !syslogServerConnected)
+            {
                 LOGD("Syslog server reachable again, reconnecting...");
                 connectSyslogServer();
             }
@@ -96,23 +104,29 @@ static void connectionMonitoringThread(void* params) {
     vTaskDelete(NULL);
 }
 
-static void wifiEventHandler(WiFiEvent_t event, WiFiEventInfo_t info) {
+static void wifiEventHandler(WiFiEvent_t event, WiFiEventInfo_t info)
+{
     LOGD("WiFi event: %s(%d)", WiFi.eventName(event), (int)event);
-    if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
+    if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP)
+    {
         connectedToWifi = true;
         reconnectingToWifi = false;
         connectSyslogServer();
         LOGI("Connected to WiFi network: %s", SSID);
-    } else if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+    }
+    else if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED)
+    {
         reconnectingToWifi = true;
-        if (syslogServerConnected) {
+        if (syslogServerConnected)
+        {
             syslogServerConnected = false;
             LOGW("Disconnected from WiFi network");
         }
     }
 }
 
-static void connectSyslogServer(void) {
+static void connectSyslogServer(void)
+{
     syslog.server("192.168.68.106", 514);
     syslogServerConnected = true;
     LOGI("Connected to syslog server!");

@@ -9,7 +9,7 @@
 
 typedef void (*ble_callback)(int);
 
-void ble_comm_init(const char* bleName, ble_callback onChangeValue);
+void ble_comm_init(const char *bleName, ble_callback onChangeValue);
 void ble_comm_deinit(void);
 
 #endif // __BLE_INTERFACE_H__
