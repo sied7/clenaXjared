@@ -30,7 +30,7 @@ typedef struct
 } motor_handle_t;
 
 ret_status_t motor_drv_init(motor_handle_t *handle, pins_t pins);
-ret_status_t motor_drv_set_speed(motor_handle_t *handle, uint16_t speed);
+ret_status_t motor_drv_set_speed(motor_handle_t *handle, uint16_t step_delay);
 ret_status_t motor_drv_set_drive(motor_handle_t *handle, motor_dir_t direction);
 ret_status_t motor_drv_release(motor_handle_t *handle);
 

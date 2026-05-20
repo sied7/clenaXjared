@@ -3,11 +3,6 @@
 
 #define MAX_MOTORS 2
 
-// Min/Max delay (in ms or microseconds)
-#define MIN_DELAY 2  // fastest
-#define MAX_DELAY 20 // slowest
-#define MAXSPEED 1000 // steps per second
-
 #define HANDLE_CHECK(handle)                    \
     do                                          \
     {                                           \
@@ -73,18 +68,9 @@ ret_status_t motor_drv_init(motor_handle_t *handle, pins_t pins)
     return RET_STATUS_OUT_OF_BOUNDS;
 }
 
-ret_status_t motor_drv_set_speed(motor_handle_t *handle, uint16_t speed)
+ret_status_t motor_drv_set_speed(motor_handle_t *handle, uint16_t step_delay)
 {
-    uint16_t step_delay = 0U;
-
     HANDLE_CHECK(handle);
-
-    // Clamp speed to avoid invalid values
-    if (speed > MAXSPEED)
-        speed = MAXSPEED;
-
-    // Convert speed → delay (inverse relationship)
-    step_delay = MAX_DELAY - (speed / (float)MAXSPEED) * (MAX_DELAY - MIN_DELAY);
 
     for (size_t i = 0; i < MAX_MOTORS; i++)
     {

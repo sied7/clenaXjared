@@ -35,8 +35,8 @@ void setup()
 
   LOGI("Motor driver initialized successfully");
 
-  // Set speed to 10 steps/sec
-  status = motor_drv_set_speed(&motor1_handle, 10);
+  // Set step delay to achieve desired speed (e.g., 100 steps per second)
+  status = motor_drv_set_speed(&motor1_handle, 1);
   if (status != RET_STATUS_OK)
   {
     LOGE("Failed to set motor speed");
@@ -74,8 +74,6 @@ void loop()
 
   process_input_state(current_input_state);
   last_input_state = current_input_state;
-
-  delay(100);
 }
 
 /*------ STATIC FUNCTIONS ------*/
