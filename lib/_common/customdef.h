@@ -16,5 +16,11 @@ typedef enum {
     RET_STATUS_OUT_OF_BOUNDS = -5,
 } ret_status_t;
 
+typedef enum {
+    DATA_ID_NONE = 0,
+    DATA_ID_MOTOR_SPEED = 1,
+    DATA_ID_MOTOR_POSITION = 2,
+} data_id_t;
+
 
 #endif /* __CUSTOMDEF_H__ */

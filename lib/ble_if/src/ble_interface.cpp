@@ -4,15 +4,32 @@
 
 // ADDRESS = "68:67:25:EC:83:4A"
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define INPUT_C_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define MOTORSPD_C_UUID "2077dde7-c78e-4ed6-8452-d5a89f15ab9a"
+#define MOTORPOS_C_UUID "6eb55e16-fab2-47d2-acd4-6d50a4b1ed04"
 
-static ble_callback onDataCallback = NULL;
+enum CharType {
+    CHAR_CMD,
+    CHAR_MOTOR_SPEED,
+    CHAR_MOTOR_POSITION,
+};
 
+class TypedCharacteristic : public BLECharacteristic {
+public:
+    CharType type;
+
+    TypedCharacteristic(const char* uuid, uint32_t props, CharType t)
+        : BLECharacteristic(uuid, props), type(t) {}
+};
+
+static ble_callback onInputWriteCallback = NULL;
 static TaskHandle_t main_task_handle = NULL;
 static volatile bool main_loop_active = false;
 
 static BLEServer *pServer = NULL;
-static BLECharacteristic *pCharacteristic = NULL;
+static TypedCharacteristic *pInputCharacteristic = NULL;
+static TypedCharacteristic *pMotorSpeedCharacteristic = NULL;
+static TypedCharacteristic *pMotorPositionCharacteristic = NULL;
 static volatile bool deviceConnected = false;
 static bool oldDeviceConnected = false;
 static uint8_t writeData = 0;
@@ -20,7 +37,11 @@ static uint8_t writeData = 0;
 static void ble_connectingMode(bool connected);
 static void main_ble_loop(void *params);
 
-class MyServerCallbacks : public BLEServerCallbacks
+static void handleWriteInput(const uint8_t* data, size_t len);
+static void handleWriteMotorSpeed(const uint8_t* data, size_t len);
+static void handleWriteMotorPosition(const uint8_t* data, size_t len);
+
+class ServerCallbacks : public BLEServerCallbacks
 {
     void onConnect(BLEServer *pServer)
     {
@@ -35,14 +56,29 @@ class MyServerCallbacks : public BLEServerCallbacks
     }
 };
 
-class MyCallbacks : public BLECharacteristicCallbacks
+class DataCallbacks : public BLECharacteristicCallbacks
 {
-    void onWrite(BLECharacteristic *pCharacteristic)
+    void onWrite(BLECharacteristic *targetCharacteristic)
     {
-        writeData = pCharacteristic->getValue()[0];
-        if (onDataCallback != NULL)
+        TypedCharacteristic* tc = (TypedCharacteristic*)targetCharacteristic;
+        std::string raw = tc->getValue();
+        const uint8_t* data = (uint8_t*)raw.data();
+        size_t len = raw.length();
+
+        switch (tc->type)
         {
-            onDataCallback(writeData);
+            case CHAR_CMD:
+                handleWriteInput(data, len);
+                break;
+            case CHAR_MOTOR_SPEED:
+                handleWriteMotorSpeed(data, len);
+                break;
+            case CHAR_MOTOR_POSITION:
+                handleWriteMotorPosition(data, len);
+                break;
+            default:
+                LOGW("Received write for unknown characteristic type");
+                break;
         }
     }
 };
@@ -52,25 +88,29 @@ void ble_comm_init(const char *bleName, ble_callback clientCallback)
     LOGI("Initializing BLE communicator with name: %s", bleName);
     BLEDevice::init(bleName);
 
-    onDataCallback = clientCallback;
+    onInputWriteCallback = clientCallback;
 
     // Create the BLE Server
     pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
+    pServer->setCallbacks(new ServerCallbacks());
 
     // Create the BLE Service
     BLEService *pService = pServer->createService(SERVICE_UUID);
 
     // Create a BLE Characteristic
-    pCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID,
+    pInputCharacteristic = new TypedCharacteristic(
+        INPUT_C_UUID,
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_NOTIFY |
-            BLECharacteristic::PROPERTY_WRITE);
+            BLECharacteristic::PROPERTY_WRITE,
+        CHAR_CMD
+    );
 
-    pCharacteristic->setCallbacks(new MyCallbacks());
-    pCharacteristic->setValue(&writeData, 1);
+    pInputCharacteristic->setCallbacks(new DataCallbacks());
+    pInputCharacteristic->setValue(&writeData, 1);
 
+    // Attach characteristics to service
+    pService->addCharacteristic(pInputCharacteristic);
     // Start the service
     pService->start();
 
@@ -140,4 +180,31 @@ static void main_ble_loop(void *params)
     }
 
     vTaskDelete(NULL);
+}
+
+static void handleWriteInput(const uint8_t* data, size_t len)
+{
+    if (len < 1)
+    {
+        LOGW("Received write with no data");
+        return;
+    }
+
+    uint8_t value = data[0];
+    if (onInputWriteCallback != NULL)
+    {
+        onInputWriteCallback(value);
+    }
+    else
+    {
+        LOGW("No input write callback registered");
+    }
+}
+static void handleWriteMotorSpeed(const uint8_t* data, size_t len)
+{
+    
+}
+static void handleWriteMotorPosition(const uint8_t* data, size_t len)
+{
+    
 }

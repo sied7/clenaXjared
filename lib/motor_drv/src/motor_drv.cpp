@@ -12,7 +12,6 @@
             return RET_STATUS_INVALID_PARAM;    \
         }                                       \
     } while (0)
-
 typedef struct
 {
     motor_handle_t *handle;
@@ -71,6 +70,12 @@ ret_status_t motor_drv_init(motor_handle_t *handle, pins_t pins)
 ret_status_t motor_drv_set_speed(motor_handle_t *handle, uint16_t step_delay)
 {
     HANDLE_CHECK(handle);
+
+    if (step_delay == 0)
+    {
+        LOGE("Motor driver set speed failed: step delay must be greater than 0");
+        return RET_STATUS_INVALID_PARAM;
+    }
 
     for (size_t i = 0; i < MAX_MOTORS; i++)
     {
