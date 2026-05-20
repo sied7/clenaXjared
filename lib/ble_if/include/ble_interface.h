@@ -7,7 +7,9 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-typedef void (*ble_callback)(int);
+#include "logger.h"
+
+typedef void (*ble_callback)(uint8_t);
 
 void ble_comm_init(const char *bleName, ble_callback onChangeValue);
 void ble_comm_deinit(void);

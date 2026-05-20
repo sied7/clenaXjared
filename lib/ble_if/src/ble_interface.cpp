@@ -1,7 +1,6 @@
 #include <stdbool.h>
 
 #include "ble_interface.h"
-#include "logger.h"
 
 // ADDRESS = "68:67:25:EC:83:4A"
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -16,7 +15,7 @@ static BLEServer *pServer = NULL;
 static BLECharacteristic *pCharacteristic = NULL;
 static volatile bool deviceConnected = false;
 static bool oldDeviceConnected = false;
-static int writeData = -1;
+static uint8_t writeData = 0;
 
 static void ble_connectingMode(bool connected);
 static void main_ble_loop(void *params);
@@ -40,7 +39,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *pCharacteristic)
     {
-        writeData = *((int *)pCharacteristic->getData());
+        writeData = pCharacteristic->getValue()[0];
         if (onDataCallback != NULL)
         {
             onDataCallback(writeData);
@@ -70,7 +69,7 @@ void ble_comm_init(const char *bleName, ble_callback clientCallback)
             BLECharacteristic::PROPERTY_WRITE);
 
     pCharacteristic->setCallbacks(new MyCallbacks());
-    pCharacteristic->setValue(writeData);
+    pCharacteristic->setValue(&writeData, 1);
 
     // Start the service
     pService->start();

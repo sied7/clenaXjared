@@ -1,6 +1,8 @@
 #ifndef __LOGGER_H__
 #define __LOGGER_H__
 
+#include <stdint.h>
+
 #define SEV_EMERG   0
 #define SEV_ALERT   1
 #define SEV_CRIT    2

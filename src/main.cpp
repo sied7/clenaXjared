@@ -1,22 +1,22 @@
 #include <Arduino.h>
 
+#include "config.h"
 #include "logger.h"
-#include "ble_interface.h"
+#include "input_handler.h"
 #include "motor_drv.h"
 
-#define DEVICE_NAME "CLENA-JARED"
-
-static motor_handle_t motor1_handle = {.id = 1};
+static motor_handle_t motor1_handle = {0};
 static pins_t motor1_pins = {
-    .inPin1 = D0,
-    .inPin2 = D1,
-    .inPin3 = D2,
-    .inPin4 = D7};
+    .inPin1 = MOTOR1_PIN1,
+    .inPin2 = MOTOR1_PIN2,
+    .inPin3 = MOTOR1_PIN3,
+    .inPin4 = MOTOR1_PIN4};
 
 static bool initializationCompleted = false;
-static int current_ble_value = 0;
+static uint8_t current_input_state = 0;
+static uint8_t last_input_state = 0;
 
-static void ble_input_callback(int value);
+static void process_input_state(uint8_t state);
 
 void setup()
 {
@@ -24,7 +24,7 @@ void setup()
 
   logger_init(DEVICE_NAME);
 
-  ble_comm_init(DEVICE_NAME, ble_input_callback);
+  input_handler_init();
 
   status = motor_drv_init(&motor1_handle, motor1_pins);
   if (status != RET_STATUS_OK)
@@ -49,19 +49,48 @@ void setup()
 
 void loop()
 {
+  ret_status_t status = RET_STATUS_OK;
+
   if (!initializationCompleted)
   {
     delay(100);
     return;
   }
+  
+  // TODO: Consider refreshing input state (queuing mechanism?) instead of just processing the current state repeatedly
+  // refresh_input_state();
+  
+  status = input_get_current_state(&current_input_state);
+  if (status != RET_STATUS_OK)
+  {
+    return;
+  }
 
-  // Example: Change motor direction based on BLE input value
-  (void)motor_drv_set_drive(&motor1_handle, (motor_dir_t)current_ble_value);
+  if (last_input_state == 0 && current_input_state == 0)
+  {
+    delay(100);
+    return;
+  }
+
+  process_input_state(current_input_state);
+  last_input_state = current_input_state;
+
+  delay(100);
 }
 
 /*------ STATIC FUNCTIONS ------*/
-static void ble_input_callback(int value)
+static void process_input_state(uint8_t state)
 {
-  LOGI("Received value from BLE client: %d", value);
-  current_ble_value = value;
+  if (state & INPUT_UP)
+  {
+    (void)motor_drv_set_drive(&motor1_handle, MOTOR_DRV_DIR_CW);
+  }
+  else if (state & INPUT_DOWN)
+  {
+    (void)motor_drv_set_drive(&motor1_handle, MOTOR_DRV_DIR_CCW);
+  }
+  else
+  {
+  (void)motor_drv_set_drive(&motor1_handle, MOTOR_DRV_DIR_STOP);
+  }
 }
