@@ -1,7 +1,7 @@
-#include "motor_drv.h"
-#include "logger.h"
+#include <stdint.h>
 
-#define MAX_MOTORS 2
+#include "motor_drv.h"
+#include "config.h"
 
 #define HANDLE_CHECK(handle)                    \
     do                                          \
@@ -18,6 +18,7 @@ typedef struct
     int current_step;
     unsigned long last_step_time;
     uint16_t step_delay; // Speed in steps per second
+    motor_state_change_callback_t state_change_callback;
 } motor_drv_context_t;
 
 /// @brief  Step sequence for controlling a 4-pin stepper motor in full-step mode
@@ -37,7 +38,7 @@ static const int stepCOUNT = sizeof(steps) / sizeof(steps[0]);
 static void setup_motor_pins(const motor_handle_t *handle);
 static void set_motor_pins(const motor_handle_t *handle, const int step[4]);
 
-ret_status_t motor_drv_init(motor_handle_t *handle, pins_t pins)
+ret_status_t motor_drv_init(motor_handle_t *handle, pins_t pins, motor_state_change_callback_t callback)
 {
     HANDLE_CHECK(handle);
 
@@ -49,11 +50,12 @@ ret_status_t motor_drv_init(motor_handle_t *handle, pins_t pins)
             motor_ctx[i].current_step = 0;
             motor_ctx[i].last_step_time = 0;
             motor_ctx[i].step_delay = 0;
+            motor_ctx[i].state_change_callback = callback;
 
             // Assign a unique ID starting from 1
             handle->id = i + 1;
             handle->pins = pins;
-
+            handle->position = 0;
             setup_motor_pins(handle);
 
             LOGI("Motor driver initialized with ID %d on pins: %d, %d, %d, %d",
@@ -146,11 +148,36 @@ ret_status_t motor_drv_set_drive(motor_handle_t *handle, motor_dir_t direction)
 
         set_motor_pins(handle, steps[current_motor->current_step]);
 
+        handle->position = (handle->position + (direction == MOTOR_DRV_DIR_CW ? 1 : (direction == MOTOR_DRV_DIR_CCW ? -1 : 0))) % INT32_MAX;
+
+        if (current_motor->state_change_callback)
+        {
+            current_motor->state_change_callback(handle);
+        }
+
         return RET_STATUS_OK;
     }
 
     // Implementation for setting motor drive direction
     return RET_STATUS_OK;
+}
+
+ret_status_t motor_drv_set_position(motor_handle_t *handle, int32_t position)
+{
+    HANDLE_CHECK(handle);
+
+    for (size_t i = 0; i < MAX_MOTORS; i++)
+    {
+        if (motor_ctx[i].handle == handle)
+        {
+            motor_ctx[i].handle->position = position;
+            return RET_STATUS_OK;
+        }
+    }
+
+    LOGE("Motor driver set position failed: handle id(%d) not found", handle->id);
+
+    return RET_STATUS_NOT_FOUND;
 }
 
 ret_status_t motor_drv_release(motor_handle_t *handle)

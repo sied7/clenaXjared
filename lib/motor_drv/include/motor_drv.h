@@ -1,9 +1,11 @@
 #ifndef __MOTOR_DRV_H__
 #define __MOTOR_DRV_H__ 
 
+#include <stdint.h>
 #include <Arduino.h>
 
-#include <customdef.h>
+#include "customdef.h"
+#include "logger.h"
 
 /// @brief  Enumeration for motor rotation direction.
 typedef enum
@@ -27,11 +29,15 @@ typedef struct
 {
     uint8_t id;
     pins_t pins;
+    int32_t position;
 } motor_handle_t;
 
-ret_status_t motor_drv_init(motor_handle_t *handle, pins_t pins);
+typedef void (*motor_state_change_callback_t)(motor_handle_t *handle);
+
+ret_status_t motor_drv_init(motor_handle_t *handle, pins_t pins, motor_state_change_callback_t callback);
 ret_status_t motor_drv_set_speed(motor_handle_t *handle, uint16_t step_delay);
 ret_status_t motor_drv_set_drive(motor_handle_t *handle, motor_dir_t direction);
+ret_status_t motor_drv_set_position(motor_handle_t *handle, int32_t position);
 ret_status_t motor_drv_release(motor_handle_t *handle);
 
 #endif /* __MOTOR_DRV_H__ */

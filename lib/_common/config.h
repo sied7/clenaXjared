@@ -3,10 +3,18 @@
 
 #define DEVICE_NAME "CLENA-JARED"
 
+#define MAX_MOTORS 2
 #define MOTOR1_PIN1 D0
 #define MOTOR1_PIN2 D1
 #define MOTOR1_PIN3 D2
 #define MOTOR1_PIN4 D3
+#define MOTOR2_PIN1 D4
+#define MOTOR2_PIN2 D5
+#define MOTOR2_PIN3 D6
+#define MOTOR2_PIN4 D7
+
+#define MOTOR1_STEP_DELAY_MS 100
+#define MOTOR2_STEP_DELAY_MS 100
 
 #define INPUT_UP    (1 << 0)
 #define INPUT_DOWN  (1 << 1)
