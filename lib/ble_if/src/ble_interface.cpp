@@ -25,6 +25,7 @@ public:
 static ble_callback onInputWriteCallback = NULL;
 static ble_callback onMotorSpeedWriteCallback = NULL;
 static ble_callback onMotorPositionWriteCallback = NULL;
+static ble_callback onDeviceConnectCallback = NULL;
 
 static TaskHandle_t main_task_handle = NULL;
 static volatile bool main_loop_active = false;
@@ -88,7 +89,7 @@ class DataCallbacks : public BLECharacteristicCallbacks
     }
 };
 
-ret_status_t ble_comm_init(const char *bleName, ble_callback writeCallback)
+ret_status_t ble_comm_init(const char *bleName, ble_callback onDeviceConnect, ble_callback onChangeValue)
 {
     LOGI("Initializing BLE communicator with name: %s", bleName);
     BLEDevice::init(bleName);
@@ -129,7 +130,8 @@ ret_status_t ble_comm_init(const char *bleName, ble_callback writeCallback)
     pAdvertising->addServiceUUID(SERVICE_UUID);
     BLEDevice::startAdvertising();
 
-    onInputWriteCallback = writeCallback;
+    onDeviceConnectCallback = onDeviceConnect;
+    onInputWriteCallback = onChangeValue;
     initialized = true;
 
     (void)xTaskCreatePinnedToCore(main_ble_loop, "main_ble_loop", 4096, NULL, 1, NULL, 0);
@@ -284,6 +286,7 @@ static void initializeCharacteristics(BLEService *pService)
     }
     else
     {
+        pMotorPositionCharacteristic->addDescriptor(new BLE2902());
         pMotorPositionCharacteristic->setCallbacks(new DataCallbacks());
         pService->addCharacteristic(pMotorPositionCharacteristic);
     }
@@ -294,6 +297,10 @@ static void ble_connectingMode(bool connected)
     if (connected == true)
     {
         LOGI("Device connected");
+        if (onDeviceConnectCallback != NULL)
+        {
+            onDeviceConnectCallback(NULL);
+        }
     }
     else
     {

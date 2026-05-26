@@ -33,13 +33,14 @@ static void input_handler_callback(void *data);
 static void motor_state_change_callback(motor_handle_t *handle);
 static void load_preferences(void);
 static void save_preferences(void);
+static void on_device_connect_callback(void *data);
 
 ret_status_t system_manager_init(void)
 {
     ret_status_t status = RET_STATUS_OK;
 
     /* Initialize the BLE communicator */
-    status = ble_comm_init(DEVICE_NAME, input_handler_callback);
+    status = ble_comm_init(DEVICE_NAME, on_device_connect_callback, input_handler_callback);
     if (status != RET_STATUS_OK)
     {
         LOGE("Failed to initialize BLE communicator");
@@ -182,6 +183,16 @@ static void motor_state_change_callback(motor_handle_t *handle)
         current_motor_position.x = handle->position;
     }
 
+    (void)set_motor_position(current_motor_position);
+
     save_preferences();
     LOGD("Current motor positions updated: motor1_pos=%d, motor2_pos=%d", current_motor_position.y, current_motor_position.x);
+}
+
+static void on_device_connect_callback(void *data)
+{
+    (void)data; // Unused parameter
+    delay(10000); // Small delay to ensure BLE connection is fully established
+    LOGI("Device connected callback triggered, sending current motor position");
+    (void)set_motor_position(current_motor_position);
 }

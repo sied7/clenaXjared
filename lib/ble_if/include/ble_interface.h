@@ -13,7 +13,7 @@
 
 typedef void (*ble_callback)(void*);
 
-ret_status_t ble_comm_init(const char *bleName, ble_callback onChangeValue);
+ret_status_t ble_comm_init(const char *bleName, ble_callback onDeviceConnect, ble_callback onChangeValue);
 ret_status_t set_motor_speed_write_callback(ble_callback callback);
 ret_status_t set_motor_position(motor_position_t currentPosition);
 void ble_comm_deinit(void);
